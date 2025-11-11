@@ -1,13 +1,13 @@
 --
--- PostgreSQL database dump - B5zlK4Z7CNcZtNTA
+-- PostgreSQL database dump
 --
 
-\restrict SeJEmdg6yrFQcEVEguVOToD3ecKx8WGk0CBxJNcfWo7KMFsuRDMHT6mGfcRTc88
+\restrict wHbvgBQCQZgVuYBCmBgwdWpO2072ClFBCZwFiL8i7hz1Z8oGrBgjxcOlL8lOOza
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
 
--- Started on 2025-11-04 08:12:22
+-- Started on 2025-11-11 10:26:45
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -29,7 +29,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
 
 --
--- TOC entry 4934 (class 0 OID 0)
+-- TOC entry 4945 (class 0 OID 0)
 -- Dependencies: 2
 -- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
 --
@@ -76,7 +76,7 @@ CREATE SEQUENCE public.ads_id_seq
 ALTER SEQUENCE public.ads_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4935 (class 0 OID 0)
+-- TOC entry 4946 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: ads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -116,7 +116,7 @@ CREATE SEQUENCE public.event_participants_id_seq
 ALTER SEQUENCE public.event_participants_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4936 (class 0 OID 0)
+-- TOC entry 4947 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: event_participants_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -163,11 +163,11 @@ CREATE SEQUENCE public.events_id_seq
     NO MAXVALUE
     CACHE 1;
 
---
+
 ALTER SEQUENCE public.events_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4937 (class 0 OID 0)
+-- TOC entry 4948 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -211,7 +211,7 @@ CREATE SEQUENCE public.global_config_id_seq
 ALTER SEQUENCE public.global_config_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4938 (class 0 OID 0)
+-- TOC entry 4949 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: global_config_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -232,6 +232,8 @@ CREATE TABLE public.users (
     email character varying(100),
     type text DEFAULT 'participant'::text NOT NULL,
     created_at timestamp without time zone DEFAULT now(),
+    active boolean DEFAULT true,
+    reset_token text,
     CONSTRAINT users_type_check CHECK ((type = ANY (ARRAY['admin'::text, 'participant'::text])))
 );
 
@@ -255,7 +257,7 @@ CREATE SEQUENCE public.users_id_seq
 ALTER SEQUENCE public.users_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4939 (class 0 OID 0)
+-- TOC entry 4950 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -264,7 +266,7 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
--- TOC entry 4755 (class 2604 OID 16642)
+-- TOC entry 4756 (class 2604 OID 16642)
 -- Name: ads id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -272,7 +274,7 @@ ALTER TABLE ONLY public.ads ALTER COLUMN id SET DEFAULT nextval('public.ads_id_s
 
 
 --
--- TOC entry 4753 (class 2604 OID 16622)
+-- TOC entry 4754 (class 2604 OID 16622)
 -- Name: event_participants id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -280,7 +282,7 @@ ALTER TABLE ONLY public.event_participants ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
--- TOC entry 4748 (class 2604 OID 16604)
+-- TOC entry 4749 (class 2604 OID 16604)
 -- Name: events id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -288,7 +290,7 @@ ALTER TABLE ONLY public.events ALTER COLUMN id SET DEFAULT nextval('public.event
 
 
 --
--- TOC entry 4760 (class 2604 OID 16690)
+-- TOC entry 4761 (class 2604 OID 16690)
 -- Name: global_config id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -304,7 +306,115 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
--- TOC entry 4780 (class 2606 OID 16648)
+-- TOC entry 4937 (class 0 OID 16639)
+-- Dependencies: 223
+-- Data for Name: ads; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.ads (id, image, link, active, created_at, title, display_time) FROM stdin;
+5	assets/uploads/ad_1762569643.png	sdfjvndlkfv	t	2025-11-07 23:24:07.593337	teste 3	5
+4	assets/uploads/ad_1762569657.jpeg	xfçvmlçkmb	t	2025-11-07 23:16:03.221702	teste 2	5
+3	assets/uploads/ad_1762569666.png	teste.com	t	2025-11-07 20:46:41.982657	Teste 1	5
+1	assets/uploads/ad_1762569676.png	https://www.exemplo1.com	t	2025-11-01 14:09:43.204916	Padrão 1	5
+2	assets/uploads/ad_1762569700.jpeg	https://www.exemplo2.com	t	2025-11-01 14:09:43.204916	Padrão 2	5
+\.
+
+
+--
+-- TOC entry 4935 (class 0 OID 16619)
+-- Dependencies: 221
+-- Data for Name: event_participants; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.event_participants (id, user_id, event_id, subscribed_at) FROM stdin;
+7	1	1	2025-11-01 15:44:44.425283
+9	2	1	2025-11-01 15:55:26.229397
+\.
+
+
+--
+-- TOC entry 4933 (class 0 OID 16601)
+-- Dependencies: 219
+-- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.events (id, name, summary, image, address, city, date_start, date_end, latitude, longitude, capacity, unlimited, cost, created_by, created_at) FROM stdin;
+1	Hackathon Tech	Maratona de programação e inovação tecnológica.	assets/uploads/sample1.jpg	Av. Paulista, São Paulo	São Paulo	2025-11-05 00:00:00	2025-11-07 00:00:00	-23.56168400	-46.65598100	200	f	Gratuito	1	2025-11-01 14:09:43.204916
+2	Workshop de IA	Treinamento intensivo sobre aplicações práticas de IA.	assets/uploads/sample2.jpg	Rua das Flores, Curitiba	Curitiba	2025-11-10 00:00:00	2025-11-10 00:00:00	-25.42840000	-49.27330000	100	f	R$ 50,00	1	2025-11-01 14:09:43.204916
+3	Feira de Startups atualizado	Evento de networking e exposição de startups.		Centro de Convenções, Recife	Recife	2025-12-01 00:00:00	2025-12-02 00:00:00	-8.04760000	-34.87700000	500	f	Gratuito	1	2025-11-01 14:09:43.204916
+\.
+
+
+--
+-- TOC entry 4939 (class 0 OID 16687)
+-- Dependencies: 225
+-- Data for Name: global_config; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.global_config (id, site_title, page_title, logo_path, favicon_path, theme_light, theme_dark, created_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 4931 (class 0 OID 16587)
+-- Dependencies: 217
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.users (id, username, password_hash, name, email, type, created_at, active, reset_token) FROM stdin;
+1	admin	$2a$06$HEuHlnkA8moUHGIsLjFTEeuJQpMBVicHqTIo9zSTN4Gdmfg4v4WFi	Administrador teste	admin@teste.com	admin	2025-11-01 14:09:43.204916	t	\N
+2	gabriel	$2a$06$hzvhsrIY.lL8HaFOH7buF.y/iX0JFdZq956TZiilj8ZrOujWZxGP6	Gabriel Participante	gabriel@teste.com	admin	2025-11-01 14:09:43.204916	t	\N
+3	teste	$2y$10$ITZwGFGN2WK4EbLR1wPrq.kTm88Nwenb8LaKAnqa2zlXNNuZzwSPW	Teste da silva	teste@teste.com	participant	2025-11-06 16:18:14.875804	t	\N
+\.
+
+
+--
+-- TOC entry 4951 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: ads_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.ads_id_seq', 5, true);
+
+
+--
+-- TOC entry 4952 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: event_participants_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.event_participants_id_seq', 10, true);
+
+
+--
+-- TOC entry 4953 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: events_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.events_id_seq', 4, true);
+
+
+--
+-- TOC entry 4954 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: global_config_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.global_config_id_seq', 1, false);
+
+
+--
+-- TOC entry 4955 (class 0 OID 0)
+-- Dependencies: 216
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.users_id_seq', 3, true);
+
+
+--
+-- TOC entry 4781 (class 2606 OID 16648)
 -- Name: ads ads_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -313,7 +423,7 @@ ALTER TABLE ONLY public.ads
 
 
 --
--- TOC entry 4776 (class 2606 OID 16625)
+-- TOC entry 4777 (class 2606 OID 16625)
 -- Name: event_participants event_participants_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -322,7 +432,7 @@ ALTER TABLE ONLY public.event_participants
 
 
 --
--- TOC entry 4778 (class 2606 OID 16627)
+-- TOC entry 4779 (class 2606 OID 16627)
 -- Name: event_participants event_participants_user_id_event_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -331,7 +441,7 @@ ALTER TABLE ONLY public.event_participants
 
 
 --
--- TOC entry 4774 (class 2606 OID 16612)
+-- TOC entry 4775 (class 2606 OID 16612)
 -- Name: events events_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -340,7 +450,7 @@ ALTER TABLE ONLY public.events
 
 
 --
--- TOC entry 4782 (class 2606 OID 16701)
+-- TOC entry 4783 (class 2606 OID 16701)
 -- Name: global_config global_config_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -349,7 +459,7 @@ ALTER TABLE ONLY public.global_config
 
 
 --
--- TOC entry 4770 (class 2606 OID 16597)
+-- TOC entry 4771 (class 2606 OID 16597)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -358,7 +468,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4772 (class 2606 OID 16599)
+-- TOC entry 4773 (class 2606 OID 16599)
 -- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -367,7 +477,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4784 (class 2606 OID 16633)
+-- TOC entry 4785 (class 2606 OID 16633)
 -- Name: event_participants event_participants_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -376,7 +486,7 @@ ALTER TABLE ONLY public.event_participants
 
 
 --
--- TOC entry 4785 (class 2606 OID 16628)
+-- TOC entry 4786 (class 2606 OID 16628)
 -- Name: event_participants event_participants_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -385,7 +495,7 @@ ALTER TABLE ONLY public.event_participants
 
 
 --
--- TOC entry 4783 (class 2606 OID 16613)
+-- TOC entry 4784 (class 2606 OID 16613)
 -- Name: events events_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -393,11 +503,11 @@ ALTER TABLE ONLY public.events
     ADD CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
--- Completed on 2025-11-04 08:12:22
+-- Completed on 2025-11-11 10:26:45
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SeJEmdg6yrFQcEVEguVOToD3ecKx8WGk0CBxJNcfWo7KMFsuRDMHT6mGfcRTc88
+\unrestrict wHbvgBQCQZgVuYBCmBgwdWpO2072ClFBCZwFiL8i7hz1Z8oGrBgjxcOlL8lOOza
 
