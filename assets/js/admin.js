@@ -27,6 +27,8 @@ window.admin = (() => {
         }
     };
 
+
+
     function initAdsModule() {
         const modal = new bootstrap.Modal(document.getElementById("adModal"));
         const form = document.getElementById("adForm");
@@ -233,202 +235,277 @@ window.admin = (() => {
         }
     };
 
-   
-function initEventsModule() {
-    const modal = new bootstrap.Modal(document.getElementById("eventModalAdmin"));
-    const form = document.getElementById("eventFormAdmin");
-    const btnAdd = document.getElementById("btnAddEvent");
-    const container = document.getElementById("adminEventsContainer");
 
-    const imageInput = document.getElementById("eventImageFile"); // input file novo
-    const preview = document.getElementById("eventImagePreview"); // img para preview
-    let cropper = null;
+    function initEventsModule() {
+        const modal = new bootstrap.Modal(document.getElementById("eventModalAdmin"));
+        const form = document.getElementById("eventFormAdmin");
+        const btnAdd = document.getElementById("btnAddEvent");
+        const container = document.getElementById("adminEventsContainer");
 
-    let map, marker;
+        const imageInput = document.getElementById("eventImageFile"); // input file novo
+        const preview = document.getElementById("eventImagePreview"); // img para preview
+        let cropper = null;
 
-    // ===================== MAPA =====================
-    function initMap() {
-        const latInput = document.getElementById("eventLatitude");
-        const lngInput = document.getElementById("eventLongitude");
-        const mapContainer = document.getElementById("eventMap");
+        let map, marker;
 
-        const lat = parseFloat(latInput.value) || -23.5505;
-        const lng = parseFloat(lngInput.value) || -46.6333;
+        // ===================== MAPA =====================
+        function initMap() {
+            const latInput = document.getElementById("eventLatitude");
+            const lngInput = document.getElementById("eventLongitude");
+            const mapDiv = document.getElementById("eventMap");
 
-        map = new google.maps.Map(mapContainer, {
-            center: { lat, lng },
-            zoom: 12,
-        });
+            if (!mapDiv) return;
 
-        marker = new google.maps.Marker({
-            position: { lat, lng },
-            map: map,
-            draggable: true,
-        });
+            const lat = parseFloat(latInput.value) || -23.5505;
+            const lng = parseFloat(lngInput.value) || -46.6333;
 
-        marker.addListener("dragend", () => {
-            latInput.value = marker.getPosition().lat();
-            lngInput.value = marker.getPosition().lng();
-        });
-    }
+            const map = L.map(mapDiv).setView([lat, lng], 14);
 
-    // ===================== CARREGA EVENTOS =====================
-    async function loadEvents() {
-        container.innerHTML = `<div class="text-center text-muted mt-3">Carregando eventos...</div>`;
-        try {
-            const res = await fetch("admin/events_get.php");
-            const data = await res.json();
-            if (!data.success) throw new Error("Erro ao carregar eventos.");
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 19,
+            }).addTo(map);
 
-            if (!data.events.length) {
-                container.innerHTML = `<div class="text-center text-muted mt-3">Nenhum evento cadastrado.</div>`;
-                return;
-            }
+            const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
 
-            let html = `<table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Data</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>`;
-
-            data.events.forEach(ev => {
-                const date = new Date(ev.date_start);
-                html += `<tr data-id="${ev.id}">
-        <td>${ev.name}</td>
-        <td>${date.toLocaleDateString()}</td>
-        <td>
-          <button class="btn btn-sm btn-primary btn-edit" data-id="${ev.id}">Editar</button>
-          <button class="btn btn-sm btn-danger btn-del" data-id="${ev.id}">Excluir</button>
-          <button class="btn btn-sm btn-secondary btn-export" data-id="${ev.id}">Exportar</button>
-        </td>
-      </tr>`;
+            marker.on("dragend", function (e) {
+                const pos = e.target.getLatLng();
+                latInput.value = pos.lat.toFixed(6);
+                lngInput.value = pos.lng.toFixed(6);
             });
 
-            html += `</tbody></table>`;
-            container.innerHTML = html;
+            // evento de clique no mapa
+            map.on('click', function (e) {
+                const { lat, lng } = e.latlng;
 
-            container.querySelectorAll(".btn-edit").forEach(btn => btn.onclick = () => openEventModal(btn.dataset.id));
-            container.querySelectorAll(".btn-del").forEach(btn => btn.onclick = () => deleteEvent(btn.dataset.id));
-            container.querySelectorAll(".btn-export").forEach(btn => btn.onclick = () => openExportModal(btn.dataset.id));
+                // atualiza inputs
+                document.getElementById('latitude').value = lat.toFixed(6);
+                document.getElementById('longitude').value = lng.toFixed(6);
 
-        } catch (err) {
-            console.error(err);
-            container.innerHTML = `<div class="text-center text-danger mt-3">Erro ao carregar eventos.</div>`;
+                // move ou cria marcador
+                if (marker) {
+                    marker.setLatLng(e.latlng);
+                } else {
+                    marker = L.marker(e.latlng).addTo(map);
+                }
+            });
         }
-    }
 
-    // ===================== ABRIR MODAL =====================
-    function openEventModal(id = null) {
-        form.reset();
-        preview.src = "";
-        preview.style.display = "none";
-        if (cropper) { cropper.destroy(); cropper = null; }
+        function initMapEdit(lat, lng) {
+            const map = L.map('mapEdit').setView([lat || -20.425, lng || -51.365], 13);
 
-        document.getElementById("eventId").value = id || "";
-        modal.show();
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+            }).addTo(map);
 
-        if (id) {
-            fetch(`admin/events_get.php?id=${id}`)
-                .then(r => r.json())
-                .then(d => {
-                    if (!d.success) return alert("Erro ao carregar evento.");
-                    const e = d.event;
+            let marker = null;
 
-                    document.getElementById("eventName").value = e.name;
-                    document.getElementById("eventSummary").value = e.summary;
-                    document.getElementById("eventDateStart").value = e.date_start.replace(" ", "T");
-                    document.getElementById("eventDateEnd").value = e.date_end.replace(" ", "T");
-                    document.getElementById("eventAddress").value = e.address;
-                    document.getElementById("eventCity").value = e.city;
-                    document.getElementById("eventCapacity").value = e.capacity;
-                    document.getElementById("eventUnlimited").checked = e.unlimited == 't' || e.unlimited == true || e.unlimited == 1;
-                    document.getElementById("eventCost").value = e.cost;
-                    document.getElementById("eventLatitude").value = e.latitude;
-                    document.getElementById("eventLongitude").value = e.longitude;
-                    document.getElementById("eventImage").value = e.image;
+            // adiciona marcador inicial se já tiver coordenadas
+            if (lat && lng) {
+                marker = L.marker([lat, lng]).addTo(map);
+            }
 
-                    // preview da imagem existente
-                    if (e.image) {
-                        preview.src = e.image;
-                        preview.style.display = "block";
-                    }
+            // evento de clique no mapa
+            map.on('click', function (e) {
+                const { lat, lng } = e.latlng;
 
-                    initMap();
+                // atualiza inputs
+                document.getElementById('latitude').value = lat.toFixed(6);
+                document.getElementById('longitude').value = lng.toFixed(6);
+
+                // move ou cria marcador
+                if (marker) {
+                    marker.setLatLng(e.latlng);
+                } else {
+                    marker = L.marker(e.latlng).addTo(map);
+                }
+            });
+        }
+
+        // ===================== CARREGA EVENTOS =====================
+        async function loadEvents() {
+            container.innerHTML = `<div class="text-center text-muted mt-3">Carregando eventos...</div>`;
+            try {
+                const res = await fetch("admin/events_get.php");
+                const data = await res.json();
+                if (!data.success) throw new Error("Erro ao carregar eventos.");
+
+                if (!data.events.length) {
+                    container.innerHTML = `<div class="text-center text-muted mt-3">Nenhum evento cadastrado.</div>`;
+                    return;
+                }
+
+                let html = `<table class="table table-striped">
+                <thead>
+                    <tr>
+                    <th>Nome</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+                            data.events.forEach(ev => {
+                                const date = new Date(ev.date_start);
+                                html += `<tr data-id="${ev.id}">
+                    <td>${ev.name}</td>
+                    <td>${date.toLocaleDateString()}</td>
+                    <td>
+                    <button class="btn btn-sm btn-primary btn-edit" data-id="${ev.id}">Editar</button>
+                    <button class="btn btn-sm btn-danger btn-del" data-id="${ev.id}">Excluir</button>
+                    <button class="btn btn-sm btn-secondary btn-export" data-id="${ev.id}">Exportar</button>
+                    </td>
+                </tr>`;
                 });
-        } else {
-            initMap();
+
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+
+                container.querySelectorAll(".btn-edit").forEach(btn => btn.onclick = () => openEventModal(btn.dataset.id));
+                container.querySelectorAll(".btn-del").forEach(btn => btn.onclick = () => deleteEvent(btn.dataset.id));
+                container.querySelectorAll(".btn-export").forEach(btn => btn.onclick = () => openExportModal(btn.dataset.id));
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="text-center text-danger mt-3">Erro ao carregar eventos.</div>`;
+            }
         }
-    }
 
-    // ===================== UPLOAD / CROPPER =====================
-    imageInput.addEventListener("change", e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-            preview.src = ev.target.result;
-            preview.style.display = "block";
+        // ===================== ABRIR MODAL =====================
+        function openEventModal(id = null) {
+            form.reset();
+            preview.src = "";
+            preview.style.display = "none";
+            if (cropper) { cropper.destroy(); cropper = null; }
 
-            if (cropper) cropper.destroy();
-            cropper = new Cropper(preview, { aspectRatio: 4/3, viewMode: 1, autoCropArea: 1 });
+            document.getElementById("eventId").value = id || "";
+            modal.show();
+
+            // Espera o modal aparecer antes de inicializar o mapa
+            const modalEl = document.getElementById("eventModalAdmin");
+            modalEl.addEventListener('shown.bs.modal', () => {
+                initMap(); // inicializa o mapa visível
+            }, { once: true });
+
+            if (id) {
+                fetch(`admin/events_get.php?id=${id}`)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (!d.success) return alert("Erro ao carregar evento.");
+                        const e = d.event;
+
+                        document.getElementById("eventName").value = e.name;
+                        document.getElementById("eventSummary").value = e.summary;
+                        document.getElementById("eventDateStart").value = e.date_start.replace(" ", "T");
+                        document.getElementById("eventDateEnd").value = e.date_end.replace(" ", "T");
+                        document.getElementById("eventAddress").value = e.address;
+                        document.getElementById("eventCity").value = e.city;
+                        document.getElementById("eventCapacity").value = e.capacity;
+                        document.getElementById("eventUnlimited").checked = e.unlimited == 't' || e.unlimited == true || e.unlimited == 1;
+                        document.getElementById("eventCost").value = e.cost;
+                        document.getElementById("eventLatitude").value = e.latitude;
+                        document.getElementById("eventLongitude").value = e.longitude;
+                        document.getElementById("eventImage").value = e.image;
+
+                        if (e.image) {
+                            preview.src = e.image;
+                            preview.style.display = "block";
+                        }
+
+                        // Espera o modal abrir antes de centralizar o marcador
+                        modalEl.addEventListener('shown.bs.modal', () => {
+                            const lat = parseFloat(e.latitude) || -23.5505;
+                            const lng = parseFloat(e.longitude) || -46.6333;
+                            const map = L.map("eventMap").setView([lat, lng], 14);
+
+                            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                                maxZoom: 19,
+                            }).addTo(map);
+
+                            const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+
+                            marker.on("dragend", function (ev) {
+                                const pos = ev.target.getLatLng();
+                                document.getElementById("eventLatitude").value = pos.lat.toFixed(6);
+                                document.getElementById("eventLongitude").value = pos.lng.toFixed(6);
+                            });
+
+                            map.on("click", function (ev) {
+                                const pos = ev.latlng;
+                                document.getElementById("eventLatitude").value = pos.lat.toFixed(6);
+                                document.getElementById("eventLongitude").value = pos.lng.toFixed(6);
+                                marker.setLatLng(pos);
+                            });
+                        }, { once: true });
+
+                    });
+            }
+        }
+
+        // ===================== UPLOAD / CROPPER =====================
+        imageInput.addEventListener("change", e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                preview.src = ev.target.result;
+                preview.style.display = "block";
+
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(preview, { aspectRatio: 4 / 3, viewMode: 1, autoCropArea: 1 });
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // ===================== SALVAR =====================
+        form.onsubmit = async e => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const id = document.getElementById("eventId").value;
+            if (id) formData.append('update', '1');
+            const url = id ? "admin/events_edit.php" : "admin/events_add.php";
+
+            // adiciona imagem cropped
+            if (cropper) {
+                const canvas = cropper.getCroppedCanvas({ width: 1200, height: 800 });
+                const blob = await new Promise(res => canvas.toBlob(res, "image/jpeg"));
+                formData.append("cropped_image", blob, "cropped.jpg");
+            }
+
+            try {
+                const res = await fetch(url, { method: "POST", body: formData });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) {
+                    modal.hide();
+                    loadEvents();
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao salvar evento.");
+            }
         };
-        reader.readAsDataURL(file);
-    });
 
-    // ===================== SALVAR =====================
-    form.onsubmit = async e => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const id = document.getElementById("eventId").value;
-        if (id) formData.append('update', '1');
-        const url = id ? "admin/events_edit.php" : "admin/events_add.php";
-
-        // adiciona imagem cropped
-        if (cropper) {
-            const canvas = cropper.getCroppedCanvas({ width: 1200, height: 800 });
-            const blob = await new Promise(res => canvas.toBlob(res, "image/jpeg"));
-            formData.append("cropped_image", blob, "cropped.jpg");
-        }
-
-        try {
-            const res = await fetch(url, { method: "POST", body: formData });
+        // ===================== DELETE / EXPORT =====================
+        async function deleteEvent(id) {
+            if (!confirm("Excluir evento?")) return;
+            const res = await fetch("admin/events_delete.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `id=${id}`
+            });
             const data = await res.json();
             alert(data.message);
-            if (data.success) {
-                modal.hide();
-                loadEvents();
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Erro ao salvar evento.");
+            if (data.success) loadEvents();
         }
-    };
 
-    // ===================== DELETE / EXPORT =====================
-    async function deleteEvent(id) {
-        if (!confirm("Excluir evento?")) return;
-        const res = await fetch("admin/events_delete.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `id=${id}`
-        });
-        const data = await res.json();
-        alert(data.message);
-        if (data.success) loadEvents();
+        function openExportModal(id) {
+            document.getElementById("exportEventId").value = id;
+            new bootstrap.Modal(document.getElementById("exportModal")).show();
+        }
+
+        btnAdd.onclick = () => openEventModal();
+        loadEvents();
     }
-
-    function openExportModal(id) {
-        document.getElementById("exportEventId").value = id;
-        new bootstrap.Modal(document.getElementById("exportModal")).show();
-    }
-
-    btnAdd.onclick = () => openEventModal();
-    loadEvents();
-}
 
 
     // ===================== GESTÃO DE USUÁRIOS =====================

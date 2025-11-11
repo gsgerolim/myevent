@@ -1,3 +1,23 @@
+// torna função acessível no escopo global pro botão do popup funcionar
+window.showEventDetail = function(id) {
+  const ev = window.eventsData.find(e => e.id == id);
+  if (!ev) return;
+  const modal = new bootstrap.Modal(document.getElementById("eventModal"));
+  const title = document.getElementById("eventModalLabel");
+  const body = document.getElementById("eventModalBody");
+
+  title.textContent = ev.name;
+  body.innerHTML = `
+    <img src="${ev.image || 'assets/default.jpg'}" class="img-fluid rounded mb-3">
+    <p><strong>Data:</strong> ${ev.date_start}</p>
+    <p><strong>Local:</strong> ${ev.address}</p>
+    <p>${ev.summary || ''}</p>
+    <p><strong>Custo:</strong> ${ev.cost}</p>
+  `;
+  modal.show();
+};
+
+
 document.addEventListener("DOMContentLoaded", () => {
   const eventsContainer = document.getElementById("eventsContainer");
   const mapContainer = document.getElementById("mapContainer");
@@ -209,35 +229,59 @@ async function loadAds() {
   }
 
   async function showMap() {
-    mapContainer.style.display = "block";
-    eventsContainer.style.display = "none";
-    mapContainer.innerHTML = "";
+  eventsContainer.style.display = "none";
+  mapContainer.style.display = "block";
 
-    const map = L.map(mapContainer).setView([-20.425, -51.365], 13);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap"
-    }).addTo(map);
-
-    let url = "php/api/get_events.php"; // padrão: todos eventos ativos
-    if (window.isLoggedIn) {
-      url = "php/api/get_my_events.php"; // se logado, apenas os eventos que o usuário participa
-    }
-
-    try {
-      const res = await fetchJSON(url);
-      const eventsToShow = res.events || [];
-
-      eventsToShow.forEach(ev => {
-        if (ev.latitude && ev.longitude) {
-          L.marker([ev.latitude, ev.longitude])
-            .addTo(map)
-            .bindPopup(ev.name);
-        }
-      });
-    } catch (err) {
-      showToast("Erro ao carregar eventos no mapa", "danger");
-    }
+  // se já existir mapa, remove
+  if (mapContainer._leaflet_id) {
+    mapContainer._leaflet_id = null;
   }
+
+  mapContainer.innerHTML = ""; 
+  mapContainer.style.height = "500px";
+
+  const map = L.map(mapContainer).setView([-20.425, -51.365], 13);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap"
+  }).addTo(map);
+
+  // define URL conforme login
+  const url = window.isLoggedIn ? "php/api/get_my_events.php" : "php/api/get_events.php";
+
+  try {
+    const res = await fetchJSON(url);
+    const eventsToShow = res.events || [];
+
+    if (!eventsToShow.length) {
+      showToast("Nenhum evento para exibir no mapa", "info");
+      return;
+    }
+
+    // adiciona marcadores
+    eventsToShow.forEach(ev => {
+      if (ev.latitude && ev.longitude) {
+        const marker = L.marker([ev.latitude, ev.longitude]).addTo(map);
+        marker.bindPopup(`
+          <div style="min-width:150px">
+            <strong>${ev.name}</strong><br>
+            <button class="btn btn-sm btn-primary mt-1" onclick="window.showEventDetail(${ev.id})">Ver mais</button>
+          </div>
+        `);
+      }
+    });
+
+    // ajusta zoom para mostrar todos
+    const bounds = eventsToShow
+      .filter(e => e.latitude && e.longitude)
+      .map(e => [e.latitude, e.longitude]);
+    if (bounds.length) map.fitBounds(bounds);
+  } catch (err) {
+    console.error(err);
+    showToast("Erro ao carregar eventos no mapa", "danger");
+  }
+}
+
 
 
   document.getElementById("loginForm").onsubmit = async e => {

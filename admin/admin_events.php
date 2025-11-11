@@ -83,12 +83,14 @@
           <div id="eventMap" style="height: 300px; border-radius: 10px; margin-top: 10px;"></div>
 
           <!-- IMAGEM DO EVENTO -->
-          <div class="mt-3">
-            <label>Imagem</label>
-            <input type="text" id="eventImage" name="image" class="form-control mb-2" readonly placeholder="URL da imagem">
-            <input type="file" id="eventImageFile" class="form-control">
-            <img id="eventImagePreview" style="max-width:100%; margin-top:10px; display:none;">
+          <div class="mb-3">
+            <label class="form-label">Imagem</label>
+<input type="file" class="form-control" id="eventImageFile" accept="image/*">
+            <div class="mt-2">
+<img id="eventImagePreview" src="" class="img-fluid rounded border" style="max-height: 150px; display:none;">
+            </div>
           </div>
+
 
         </div>
         <div class="modal-footer">

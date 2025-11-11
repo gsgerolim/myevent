@@ -12,7 +12,7 @@ if (!$id) json_response(['success' => false, 'message' => 'ID inválido'], 400);
 
 $pdo = getPDO();
 
-// Se for apenas carregar dados de um evento
+// === Carregar dados (GET via POST) ===
 if (!isset($input['update'])) {
     $stmt = $pdo->prepare("SELECT * FROM events WHERE id = ?");
     $stmt->execute([$id]);
@@ -21,7 +21,7 @@ if (!isset($input['update'])) {
     json_response(['success' => true, 'event' => $event]);
 }
 
-// Campos permitidos
+// === Campos editáveis ===
 $fields = [
     'name', 'summary', 'date_start', 'date_end',
     'address', 'city', 'latitude', 'longitude',
@@ -31,7 +31,22 @@ $fields = [
 $update = [];
 $params = ['id' => $id];
 
-// Atualiza campos do POST
+// === Upload direto de imagem ===
+if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+    $dir = __DIR__ . '/../assets/uploads/';
+    if (!file_exists($dir)) mkdir($dir, 0777, true);
+
+    $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+    $newName = 'event_' . $id . '_' . time() . '.' . $ext;
+    $target = $dir . $newName;
+
+    if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
+        $params['image'] = 'assets/uploads/' . $newName;
+        $update[] = "image = :image";
+    }
+}
+
+// === Atualização dos campos normais ===
 foreach ($fields as $f) {
     if (array_key_exists($f, $input)) {
         if ($f === 'unlimited') {
@@ -45,15 +60,17 @@ foreach ($fields as $f) {
     }
 }
 
-// Se enviou nova imagem, salva e atualiza
+// === Upload de imagem cortada (via cropper) ===
 if (isset($_FILES['cropped_image']) && $_FILES['cropped_image']['error'] === UPLOAD_ERR_OK) {
     $imagePath = saveImageUpload($_FILES['cropped_image'], 'events', 'evt_');
     $params['image'] = $imagePath;
     if (!in_array('image = :image', $update)) $update[] = 'image = :image';
 }
 
+// === Se não há nada para atualizar ===
 if (!$update) json_response(['success' => false, 'message' => 'Nenhum dado para atualizar'], 400);
 
+// === Executa UPDATE ===
 $sql = "UPDATE events SET " . implode(', ', $update) . " WHERE id = :id";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
