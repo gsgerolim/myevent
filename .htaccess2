@@ -1,0 +1,30 @@
+# Ativa reescrita de URL
+RewriteEngine On
+RewriteBase /
+
+# Evita reescrever arquivos/diretórios reais
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Rotas amigáveis para API
+RewriteRule ^api/(.*)$ php/api/$1.php [L,QSA]
+
+# Bloqueia acesso direto a pastas sensíveis
+RewriteRule ^php/lib/ - [F,L]
+RewriteRule ^php/config/ - [F,L]
+
+# Remove index.php da URL
+RewriteCond %{THE_REQUEST} \s/+index\.php[\s?]
+RewriteRule ^index\.php$ / [R=301,L]
+
+# Charset e cache
+AddDefaultCharset utf-8
+<FilesMatch "\.(jpg|jpeg|png|gif|css|js|ico|webp|svg)$">
+  ExpiresActive On
+  ExpiresDefault "access plus 7 days"
+</FilesMatch>
+
+# Impede listagem
+Options -Indexes
+''
