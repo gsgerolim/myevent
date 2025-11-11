@@ -1,16 +1,20 @@
 FROM php:8.2-apache
 
+# Instala dependências do sistema e extensões PHP necessárias
 RUN apt-get update && apt-get install -y \
-    libpng-dev libjpeg-dev libfreetype6-dev zip unzip git libpq-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_pgsql
+    libpq-dev \
+    libzip-dev \
+    unzip \
+    git \
+ && docker-php-ext-install pdo pdo_pgsql zip \
+ && a2enmod rewrite
 
-WORKDIR /var/www/html
+# Copia os arquivos do projeto
+COPY . /var/www/html/
+WORKDIR /var/www/html/
 
-COPY . .
+# Instala o Composer e as dependências
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs || true
 
-RUN curl -sS https://getcomposer.org/installer | php \
-    && php composer.phar install --no-interaction --optimize-autoloader
-
-EXPOSE 8080
-CMD ["apache2-foreground"]
+EXPOSE 80
