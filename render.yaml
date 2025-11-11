@@ -3,4 +3,4 @@ services:
     name: myevent
     env: php
     buildCommand: ""
-    startCommand: "php -S 0.0.0.0:10000 -t public"
+    startCommand: "php -S 0.0.0.0:10000 -t myevent"
