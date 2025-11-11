@@ -8,15 +8,17 @@ function getPDO() {
         return $pdo;
     }
 
-    $config = include __DIR__ . '/../config.php';
+$config = include __DIR__ . '/../config.php';
 
-    $host = $config['db']['host'] ?? 'localhost';
-    $port = $config['db']['port'] ?? 5432;
-    $dbname = $config['db']['dbname'] ?? 'eventhub';
-    $user = $config['db']['user'] ?? 'postgres';
-    $pass = $config['db']['pass'] ?? '';
+$host = $config['db']['host'];
+$port = $config['db']['port'];
+$dbname = $config['db']['dbname'];
+$user = $config['db']['user'];
+$pass = $config['db']['pass'];
+$sslmode = $config['db']['sslmode'];
 
-$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=$sslmode";
+
 
     try {
         $pdo = new PDO($dsn, $user, $pass, [
