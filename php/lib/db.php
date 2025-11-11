@@ -16,7 +16,7 @@ function getPDO() {
     $user = $config['db']['user'] ?? 'postgres';
     $pass = $config['db']['pass'] ?? '';
 
-    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
 
     try {
         $pdo = new PDO($dsn, $user, $pass, [
