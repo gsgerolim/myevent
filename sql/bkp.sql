@@ -184,8 +184,8 @@ CREATE TABLE public.global_config (
     id integer NOT NULL,
     site_title character varying(255) DEFAULT 'Hotsite Evento'::character varying,
     page_title character varying(255) DEFAULT 'Hotsite Evento'::character varying,
-    logo_path character varying(255) DEFAULT 'assets/img/logo.png'::character varying,
-    favicon_path character varying(255) DEFAULT 'assets/img/favicon.png'::character varying,
+    logo_path character varying(255) DEFAULT '../assets/uploads/logo.png'::character varying,
+    favicon_path character varying(255) DEFAULT '../assets/uploads/favicon.png'::character varying,
     theme_light jsonb DEFAULT '{"text": "#000000", "primary": "#0d6efd", "secondary": "#6c757d", "background": "#ffffff"}'::jsonb,
     theme_dark jsonb DEFAULT '{"text": "#ffffff", "primary": "#0d6efd", "secondary": "#6c757d", "background": "#121212"}'::jsonb,
     created_at timestamp without time zone DEFAULT now()

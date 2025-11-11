@@ -17,7 +17,9 @@ $city = trim($input['city'] ?? '');
 $latitude = $input['latitude'] ?? null;
 $longitude = $input['longitude'] ?? null;
 $capacity = intval($input['capacity'] ?? 100);
-$unlimited = filter_var($input['unlimited'] ?? false, FILTER_VALIDATE_BOOLEAN);
+//$unlimited = filter_var($input['unlimited'] ?? false, FILTER_VALIDATE_BOOLEAN);
+$unlimited = isset($input['unlimited']) ? 1 : 0;
+//$active = isset($_POST['active']) ? 1 : 0;
 $cost = trim($input['cost'] ?? 'Gratuito');
 
 if (!$name || !$date_start) {
