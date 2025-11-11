@@ -1,4 +1,7 @@
 // torna função acessível no escopo global pro botão do popup funcionar
+window.eventsData = [];
+
+
 window.showEventDetail = function(id) {
   const ev = window.eventsData.find(e => e.id == id);
   if (!ev) return;
@@ -27,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const eventModal = new bootstrap.Modal(document.getElementById("eventModal"));
   const eventModalTitle = document.getElementById("eventModalLabel");
   const eventModalBody = document.getElementById("eventModalBody");
-  let eventsData = [];
+window.eventsData = [];
   let viewGrid = true;
   let pendingEventSubscription = null;
 
@@ -98,8 +101,9 @@ async function loadAds() {
     mapContainer.style.display = "none";
     try {
       const res = await fetchJSON("php/api/get_events.php");
-      eventsData = res.events || [];
-      renderEvents(eventsData);
+      window.eventsData = res.events || [];
+renderEvents(window.eventsData);
+
     } catch {
       eventsContainer.innerHTML = `<div class="text-center text-danger mt-4">Erro ao carregar eventos.</div>`;
     }
@@ -141,26 +145,45 @@ async function loadAds() {
     if (!ev) return;
     eventModalTitle.textContent = ev.name;
     eventModalBody.innerHTML = `
-      <img src="${ev.image || 'assets/default.jpg'}" class="img-fluid rounded mb-3">
-      <p><strong>Data:</strong> ${ev.date_start}</p>
-      <p><strong>Local:</strong> ${ev.address}</p>
-      <p>${ev.summary || ''}</p>
-      <p><strong>Custo:</strong> ${ev.cost}</p>
-      <div id="mapEvent" style="height:250px;" class="rounded mb-3"></div>
-      <div class="d-flex justify-content-between">
-        <span class="text-muted small">${ev.unlimited ? 'Vagas ilimitadas' : ev.capacity}</span>
-        <button id="subscribeBtn" class="btn ${ev.isSubscribed ? 'btn-danger' : 'btn-success'}">
-          ${ev.isSubscribed ? 'Cancelar inscrição' : 'Inscrever-se'}
-        </button>
-      </div>`;
+  <img src="${ev.image || 'assets/default.jpg'}" class="img-fluid rounded mb-3">
+  <p><strong>Data:</strong> ${ev.date_start}</p>
+  <p><strong>Local:</strong> ${ev.address}</p>
+  <p>${ev.summary || ''}</p>
+  <p><strong>Custo:</strong> ${ev.cost}</p>
+  <div id="mapEvent" style="height:250px;" class="rounded mb-3"></div>
+  <div class="d-flex justify-content-between align-items-center">
+    <span class="text-muted small">${ev.unlimited ? 'Vagas ilimitadas' : ev.capacity}</span>
+    <div class="d-flex gap-2">
+      <button id="subscribeBtn" class="btn ${ev.isSubscribed ? 'btn-danger' : 'btn-success'}">
+        ${ev.isSubscribed ? 'Cancelar inscrição' : 'Inscrever-se'}
+      </button>
+      <button id="navigateBtn" class="btn btn-sm btn-success">Como chegar</button>
+    </div>
+  </div>
+`;
+
+   
     if (ev.latitude && ev.longitude) {
-      const map = L.map("mapEvent").setView([ev.latitude, ev.longitude], 15);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
-      L.marker([ev.latitude, ev.longitude]).addTo(map).bindPopup(ev.name);
-    }
+  const map = L.map("mapEvent").setView([ev.latitude, ev.longitude], 15);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
+  L.marker([ev.latitude, ev.longitude]).addTo(map).bindPopup(ev.name);
+
+  document.getElementById("navigateBtn").onclick = () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const url = isIOS
+      ? `http://maps.apple.com/?daddr=${ev.latitude},${ev.longitude}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${ev.latitude},${ev.longitude}`;
+    window.open(url, "_blank");
+  };
+}
+
     eventModal.show();
     document.getElementById("subscribeBtn").onclick = () => subscribeToEvent(ev.id);
+
+    
   }
+
+  
 
   async function subscribeToEvent(id) {
     if (!window.isLoggedIn) {
@@ -260,16 +283,31 @@ async function loadAds() {
 
     // adiciona marcadores
     eventsToShow.forEach(ev => {
-      if (ev.latitude && ev.longitude) {
-        const marker = L.marker([ev.latitude, ev.longitude]).addTo(map);
-        marker.bindPopup(`
-          <div style="min-width:150px">
-            <strong>${ev.name}</strong><br>
-            <button class="btn btn-sm btn-primary mt-1" onclick="window.showEventDetail(${ev.id})">Ver mais</button>
-          </div>
-        `);
-      }
-    });
+  if (ev.latitude && ev.longitude) {
+    const marker = L.marker([ev.latitude, ev.longitude]).addTo(map);
+
+    // cria o popup com dois botões
+    marker.bindPopup(`
+      <div style="min-width:150px">
+        <strong>${ev.name}</strong><br>
+        <button class="btn btn-sm btn-primary mt-1" onclick="window.showEventDetail(${ev.id})">
+          Ver mais
+        </button>
+        <button class="btn btn-sm btn-success mt-1" onclick="window.openNavigation(${ev.latitude}, ${ev.longitude})">
+          Como chegar
+        </button>
+      </div>
+    `);
+  }
+});
+
+window.openNavigation = function(lat, lng) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const url = isIOS
+    ? `http://maps.apple.com/?daddr=${lat},${lng}`
+    : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  window.open(url, "_blank");
+};
 
     // ajusta zoom para mostrar todos
     const bounds = eventsToShow

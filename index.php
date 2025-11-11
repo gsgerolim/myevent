@@ -43,9 +43,9 @@ $isAdmin = $user && ($user['type'] ?? '') === 'admin';
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body d-flex flex-column">
-      <a href="#" class="nav-link text-white mb-2" data-action="inicio">🏠 Início</a>
+      <!--a href="#" class="nav-link text-white mb-2" data-action="inicio">🏠 Início</a -->
       <a href="#" class="nav-link text-white mb-2" data-action="eventos">📅 Eventos</a>
-      <a href="#" class="nav-link text-white mb-2" data-action="mapa">🗺️ Mapa</a>
+      <a href="#" class="nav-link text-white mb-2" data-action="mapa">🗺️ Meu Mapa</a>
 
       <?php if (!$user): ?>
         <a href="#" class="nav-link text-white mb-2" id="menuLogin">🔐 Login / Cadastro</a>

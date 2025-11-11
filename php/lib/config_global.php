@@ -5,7 +5,7 @@
 $config = [
     'site_title'    => 'EventHub',
     'page_title'    => 'EventHub - Gerenciamento de Eventos',
-    'favicon_path'  => 'assets/uploads/assets/favicon.png',
+    'favicon_path'  => 'assets/uploads/favicon.png',
     'logo_path'     => 'assets/uploads/logo.png',
 
     // Temas (JSON string para facilitar edição no DB)
