@@ -1,6 +1,7 @@
 <?php
 // php/api/register.php
 require_once __DIR__ . '/../lib/functions.php';
+require_once __DIR__ . '/../lib/auth.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['success' => false, 'message' => 'Método não permitido'], 405);
@@ -41,4 +42,7 @@ $stmt->execute([
 ]);
 
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+
 json_response(['success' => true, 'user' => $user]);

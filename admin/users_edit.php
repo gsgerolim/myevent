@@ -29,6 +29,7 @@ if (!empty($data['fetch']) && !empty($data['id'])) {
 
 // Atualização do usuário
 if (!empty($data['id']) && !empty($data['username'])) {
+    error_log('Updating user with ID: ' . $data['id']);
     $stmt = $pdo->prepare("
         UPDATE users SET 
             username = :username, 

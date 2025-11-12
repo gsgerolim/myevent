@@ -5,7 +5,7 @@ require_once __DIR__ . '/../php/lib/functions.php';
 requireAdmin(); // garante que apenas admins acessem
 
 ?>
-<script src="admin/admin.js"></script>
+<!--script src="admin/admin.js"></script-->
 
 <div class="d-flex flex-wrap gap-3 mt-3">
     <button class="btn btn-primary" id="btnManageEvents">Gestão de Eventos</button>

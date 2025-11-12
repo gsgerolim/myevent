@@ -320,6 +320,62 @@ window.openNavigation = function(lat, lng) {
   }
 }
 
+// Abrir modal de registro a partir do login
+const openRegister = document.getElementById('openRegisterModal');
+if (openRegister) {
+  openRegister.addEventListener('click', e => {
+    e.preventDefault();
+    bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+    new bootstrap.Modal(document.getElementById('registerModal')).show();
+  });
+}
+
+
+// Submissão do cadastro
+document.getElementById('registerForm').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const name = document.getElementById('registerName').value.trim();
+  const username = document.getElementById('registerUsername').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
+  const password = document.getElementById('registerPassword').value;
+
+  try {
+    const res = await fetch('php/api/register.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, username, email, password })
+    });
+
+    const data = await res.json();
+    if (!data.success) {
+      showToast(data.message || 'Erro ao cadastrar', 'danger');
+      return;
+    }
+
+    // Login automático após cadastro
+    const loginRes = await fetch('php/api/login.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    const loginData = await loginRes.json();
+    if (loginData.success) {
+      window.isLoggedIn = true;
+      window.currentUserName = loginData.name || username;
+      showToast('Cadastro realizado! Você já está logado.', 'success');
+      bootstrap.Modal.getInstance(document.getElementById("registerModal")).hide();
+      location.reload();
+    } else {
+      showToast('Cadastro realizado, mas falha no login automático.', 'warning');
+    }
+
+  } catch (err) {
+    console.error(err);
+    showToast('Erro ao cadastrar', 'danger');
+  }
+});
 
 
   document.getElementById("loginForm").onsubmit = async e => {

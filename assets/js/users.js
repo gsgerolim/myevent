@@ -70,9 +70,67 @@ async function loadUsersList() {
 }
 
 // Placeholder das ações (vamos preencher depois)
-function editUser(id) {
-  alert("Editar usuário ID: " + id);
+async function editUser(id) {
+  
+
+  const modalEl = document.getElementById("userModalAdmin");
+  const modal = new bootstrap.Modal(modalEl);
+
+  try {
+    const res = await fetch("admin/users_edit.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fetch: 1, id })
+    });
+    const data = await res.json();
+console.error("Data received: ", data);
+    if (!data.success) return alert(data.message || "Erro ao carregar usuário.");
+
+    const u = data.user;
+    document.getElementById("editUserId").value = u.id;
+    document.getElementById("editUserUsername").value = u.username;
+    document.getElementById("editUserName").value = u.name ?? "";
+    document.getElementById("editUserEmail").value = u.email ?? "";
+    document.getElementById("editUserType").value = u.type;
+    document.getElementById("editUserActive").checked = !!u.active;
+
+    modal.show();
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao carregar usuário.");
+  }
 }
+
+// Salvar alterações
+document.getElementById("saveUserBtn").addEventListener("click", async () => {
+
+  const id = document.getElementById("editUserId").value;
+  const username = document.getElementById("editUserUsername").value.trim();
+  const name = document.getElementById("editUserName").value.trim();
+  const email = document.getElementById("editUserEmail").value.trim();
+  const type = document.getElementById("editUserType").value;
+  const active = document.getElementById("editUserActive").checked;
+
+  try {
+    const res = await fetch("admin/users_edit.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, username, name, email, type, active })
+    });
+    const data = await res.json();
+  console.error("Data received: ", data);
+
+    if (!data.success) return alert(data.message || "Erro ao salvar usuário.");
+
+    alert("Usuário salvo com sucesso!");
+    bootstrap.Modal.getInstance(document.getElementById("userModalAdmin")).hide();
+    loadUsersList();
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao salvar usuário.");
+  }
+});
+
 
 function deleteUser(id) {
   alert("Excluir usuário ID: " + id);
