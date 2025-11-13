@@ -9,11 +9,23 @@ require_once __DIR__ . '/php/lib/db.php';
 
 $user = getUser();
 $isAdmin = $user && ($user['type'] ?? '') === 'admin';
+
+$config = $pdo->query("SELECT * FROM global_config WHERE id = 1")->fetch(PDO::FETCH_ASSOC);
+$themeLight = json_decode($config['theme_light'], true);
+$themeDark  = json_decode($config['theme_dark'], true);
 ?>
 <!doctype html>
 <html lang="pt-BR">
 
 <head>
+  <script>
+  // aplica tema claro por padrão
+  document.documentElement.style.setProperty('--color-bg', '<?= $themeLight['background'] ?>');
+  document.documentElement.style.setProperty('--color-text', '<?= $themeLight['text'] ?>');
+  document.documentElement.style.setProperty('--color-primary', '<?= $themeLight['primary'] ?>');
+  document.documentElement.style.setProperty('--color-secondary', '<?= $themeLight['secondary'] ?>');
+</script>
+
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= htmlspecialchars($config['site_title'] ?? 'Eventos') ?></title>
@@ -22,10 +34,13 @@ $isAdmin = $user && ($user['type'] ?? '') === 'admin';
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="assets/css/style.css">
   <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
+  <script src="assets/libs/pickr/pickr.min.js"></script>
+<link rel="stylesheet" href="assets/libs/pickr/themes/classic.min.css"/>
+
 
 </head>
 
-<body class="theme-light">
+<body class="<?= $currentTheme == 'dark' ? 'theme-dark' : '' ?>">
   <!-- NAVBAR -->
   <nav class="navbar navbar-dark bg-dark fixed-top shadow-sm">
     <div class="container-fluid">
@@ -43,6 +58,7 @@ $isAdmin = $user && ($user['type'] ?? '') === 'admin';
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body d-flex flex-column">
+              <button id="btnToggleTheme" class="btn btn-outline-light mt-2 w-100">🌞 / 🌙</button>
       <!--a href="#" class="nav-link text-white mb-2" data-action="inicio">🏠 Início</a -->
       <a href="#" class="nav-link text-white mb-2" data-action="eventos">📅 Eventos</a>
       <a href="#" class="nav-link text-white mb-2" data-action="mapa">🗺️ Meu Mapa</a>
@@ -58,7 +74,7 @@ $isAdmin = $user && ($user['type'] ?? '') === 'admin';
           <div class="border-top border-secondary mt-2 pt-2 mb-2"></div>
           <span class="text-secondary small mb-2">Administração</span>
           <a href="#" class="nav-link text-white mb-2" data-action="painel">⚙️ Painel</a>
-          <a href="admin/config.php" class="nav-link text-white mb-2">🎨 Configuração</a>
+<a href="#" class="nav-link text-white mb-2" data-action="config">🎨 Configuração</a>
         <?php endif; ?>
         <a href="#" id="menuLogout" class="nav-link text-white mt-3 mb-2">🚪 Sair</a>
       <?php endif; ?>
@@ -147,15 +163,16 @@ $isAdmin = $user && ($user['type'] ?? '') === 'admin';
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/admin.js"></script>
-  <script src="assets/js/users.js"></script>
+
+
+
 
   <script>
     window.isLoggedIn = <?= $user ? 'true' : 'false' ?>;
     window.isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
     window.currentUserName = <?= $user ? json_encode($user['name'] ?? $user['username']) : 'null' ?>;
   </script>
+<script src="assets/js/app.js?v=<?= time() ?>"></script>
 
 </body>
 

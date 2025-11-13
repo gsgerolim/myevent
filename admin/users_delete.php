@@ -1,22 +1,21 @@
 <?php
+header('Content-Type: application/json');
+require_once __DIR__ . '/../php/lib/db.php';
 require_once __DIR__ . '/../php/lib/auth.php';
-require_once __DIR__ . '/../php/lib/functions.php';
-
 requireAdmin();
 
-$input = json_decode(file_get_contents('php://input'), true);
-$id = intval($input['id'] ?? 0);
-
-if (!$id) json_response(['success' => false, 'message' => 'ID inválido'], 400);
-
-$pdo = getPDO();
-
-// impede exclusão do próprio admin
-if ($id == $_SESSION['user_id']) {
-    json_response(['success' => false, 'message' => 'Você não pode excluir sua própria conta!'], 403);
+$data = json_decode(file_get_contents('php://input'), true);
+if (empty($data['id'])) {
+    echo json_encode(['success' => false, 'message' => 'ID não informado']);
+    exit;
 }
 
+$pdo = getPDO();
 $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
-$stmt->execute([$id]);
+$stmt->execute([$data['id']]);
 
-json_response(['success' => true, 'message' => 'Usuário excluído com sucesso!']);
+if ($stmt->rowCount() > 0) {
+    echo json_encode(['success' => true]);
+} else {
+    echo json_encode(['success' => false, 'message' => 'Usuário não encontrado ou já removido']);
+}

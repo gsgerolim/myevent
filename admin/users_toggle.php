@@ -1,16 +1,31 @@
 <?php
+header('Content-Type: application/json');
+require_once __DIR__ . '/../php/lib/db.php';
 require_once __DIR__ . '/../php/lib/auth.php';
-require_once __DIR__ . '/../php/lib/functions.php';
-
 requireAdmin();
 
-$input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
-$id = intval($input['id'] ?? 0);
-if (!$id) json_response(['success'=>false,'message'=>'ID inválido'],400);
+$data = json_decode(file_get_contents('php://input'), true);
+if (empty($data['id'])) {
+    echo json_encode(['success' => false, 'message' => 'ID não informado']);
+    exit;
+}
 
 $pdo = getPDO();
-$pdo->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS active boolean DEFAULT true");
-$stmt = $pdo->prepare("UPDATE users SET active = NOT COALESCE(active, true) WHERE id = :id RETURNING active");
-$stmt->execute(['id'=>$id]);
-$val = $stmt->fetchColumn();
-json_response(['success'=>true,'message'=>$val ? 'Usuário ativado' : 'Usuário desativado']);
+$stmt = $pdo->prepare("SELECT active FROM users WHERE id = ?");
+$stmt->execute([$data['id']]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$user) {
+    echo json_encode(['success' => false, 'message' => 'Usuário não encontrado']);
+    exit;
+}
+
+$newStatus = $user['active'] ? 0 : 1;
+
+$update = $pdo->prepare("UPDATE users SET active = ? WHERE id = ?");
+$update->execute([$newStatus, $data['id']]);
+
+echo json_encode([
+    'success' => true,
+    'newStatus' => $newStatus
+]);

@@ -9,7 +9,7 @@ if (!$user) {
 }
 
 $pdo = getPDO();
-$stmt = $pdo->prepare("SELECT id, username, name, email, type FROM users WHERE id = :uid");
+$stmt = $pdo->prepare("SELECT id, username, name, email, type, active FROM users WHERE id = :uid");
 $stmt->execute([':uid' => $user['id']]);
 $profile = $stmt->fetch(PDO::FETCH_ASSOC);
 

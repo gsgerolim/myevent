@@ -2,7 +2,7 @@
 window.eventsData = [];
 
 
-window.showEventDetail = function(id) {
+window.showEventDetail = function (id) {
   const ev = window.eventsData.find(e => e.id == id);
   if (!ev) return;
   const modal = new bootstrap.Modal(document.getElementById("eventModal"));
@@ -22,6 +22,7 @@ window.showEventDetail = function(id) {
 
 
 document.addEventListener("DOMContentLoaded", () => {
+  
   const eventsContainer = document.getElementById("eventsContainer");
   const mapContainer = document.getElementById("mapContainer");
   const adsContainer = document.getElementById("adsInner");
@@ -30,9 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const eventModal = new bootstrap.Modal(document.getElementById("eventModal"));
   const eventModalTitle = document.getElementById("eventModalLabel");
   const eventModalBody = document.getElementById("eventModalBody");
-window.eventsData = [];
+  window.eventsData = [];
   let viewGrid = true;
   let pendingEventSubscription = null;
+
+
 
   function showToast(msg, type = "info") {
     const toast = document.createElement("div");
@@ -52,16 +55,16 @@ window.eventsData = [];
     } catch (e) { showToast(e.message, "danger"); throw e; }
   }
 
-async function loadAds() {
-  try {
-    const res = await fetchJSON("php/api/ads_active.php");
-    const ads = res.data || res.ads || [];
-    if (!ads.length) return;
-    const adsInner = document.getElementById("adsInner");
-    adsInner.innerHTML = "";
+  async function loadAds() {
+    try {
+      const res = await fetchJSON("php/api/ads_active.php");
+      const ads = res.data || res.ads || [];
+      if (!ads.length) return;
+      const adsInner = document.getElementById("adsInner");
+      adsInner.innerHTML = "";
 
-    ads.forEach((ad, i) => {
-      adsInner.innerHTML += `
+      ads.forEach((ad, i) => {
+        adsInner.innerHTML += `
         <div class="carousel-item ${i === 0 ? 'active' : ''}" 
              data-id="${ad.id}" 
              data-title="${ad.title || ''}" 
@@ -69,30 +72,30 @@ async function loadAds() {
              data-image="${ad.image}">
           <img src="${ad.image}" class="d-block w-100 rounded ad-slide" alt="${ad.title || 'Propaganda'}">
         </div>`;
-    });
-
-    const carouselEl = document.getElementById("adsContainerPublic");
-    new bootstrap.Carousel(carouselEl, { interval: 5000, ride: "carousel" });
-
-    // Clique direto na imagem abre o modal
-    const modal = new bootstrap.Modal(document.getElementById("adDetailModal"));
-    const titleEl = document.getElementById("adDetailTitle");
-    const imageEl = document.getElementById("adDetailImage");
-    const linkEl = document.getElementById("adDetailLink");
-
-    adsInner.querySelectorAll(".ad-slide").forEach(img => {
-      img.addEventListener("click", () => {
-        const parent = img.closest(".carousel-item");
-        titleEl.textContent = parent.dataset.title || "Propaganda";
-        imageEl.src = parent.dataset.image;
-        linkEl.href = parent.dataset.link;
-        modal.show();
       });
-    });
-  } catch (err) {
-    console.error(err);
+
+      const carouselEl = document.getElementById("adsContainerPublic");
+      new bootstrap.Carousel(carouselEl, { interval: 5000, ride: "carousel" });
+
+      // Clique direto na imagem abre o modal
+      const modal = new bootstrap.Modal(document.getElementById("adDetailModal"));
+      const titleEl = document.getElementById("adDetailTitle");
+      const imageEl = document.getElementById("adDetailImage");
+      const linkEl = document.getElementById("adDetailLink");
+
+      adsInner.querySelectorAll(".ad-slide").forEach(img => {
+        img.addEventListener("click", () => {
+          const parent = img.closest(".carousel-item");
+          titleEl.textContent = parent.dataset.title || "Propaganda";
+          imageEl.src = parent.dataset.image;
+          linkEl.href = parent.dataset.link;
+          modal.show();
+        });
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
-}
 
 
 
@@ -102,43 +105,79 @@ async function loadAds() {
     try {
       const res = await fetchJSON("php/api/get_events.php");
       window.eventsData = res.events || [];
-renderEvents(window.eventsData);
+      renderEvents(window.eventsData);
 
     } catch {
       eventsContainer.innerHTML = `<div class="text-center text-danger mt-4">Erro ao carregar eventos.</div>`;
     }
   }
 
-  function renderEvents(list) {
-    mapContainer.style.display = "none";
-    eventsContainer.style.display = "flex";
-    eventsContainer.className = viewGrid ? "row view-grid" : "row view-list";
-    if (list.length === 0) {
-      eventsContainer.innerHTML = `<div class="text-center text-muted mt-4">Nenhum evento ativo.</div>`;
-      return;
-    }
-    eventsContainer.innerHTML = "";
-    list.forEach(ev => {
-      const card = document.createElement("div");
-      card.className = "col-md-4 mb-4";
-      card.innerHTML = `
-        <div class="card h-100 shadow-sm">
-                    ${ev.isSubscribed ? '<span class="badge bg-success position-absolute top-0 end-0 m-2">✔ Inscrito</span>' : ''}
+ function renderEvents(list) {
+  const eventsContainer = document.getElementById("eventsContainer");
+  const btnToggleView = document.getElementById("btnToggleView");
 
-          <img src="${ev.image || 'assets/default.jpg'}" class="card-img-top" alt="${ev.name}">
-          <div class="card-body d-flex flex-column">
-            <h5>${ev.name}</h5>
-            <p class="flex-grow-1 small text-muted">${ev.summary || ''}</p>
-            <p class="text-secondary small">${ev.address}</p>
-            <button class="btn btn-primary mt-auto" data-id="${ev.id}">Ver detalhes</button>
-          </div>
-        </div>`;
-      eventsContainer.appendChild(card);
-    });
-    eventsContainer.querySelectorAll("button[data-id]").forEach(btn => {
-      btn.addEventListener("click", () => showEventDetail(btn.dataset.id));
-    });
+  // mostra/oculta botão apenas se houver eventos
+  if (!list.length) {
+    btnToggleView.style.display = "none";
+  } else {
+    btnToggleView.style.display = "inline-block";
   }
+
+  eventsContainer.style.display = "flex";
+  eventsContainer.className = viewGrid ? "row view-grid" : "row view-list";
+  eventsContainer.innerHTML = "";
+
+  if (!list.length) {
+    eventsContainer.innerHTML = `<div class="text-center text-muted mt-4">Nenhum evento ativo.</div>`;
+    return;
+  }
+
+  list.forEach(ev => {
+    const cardCol = document.createElement("div");
+    cardCol.className = viewGrid 
+      ? "col-sm-6 col-md-4 col-lg-3 mb-4" // grid responsivo
+      : "col mb-3"; // lista ocupa toda a linha
+
+    const cardHTML = viewGrid ? `
+      <div class="card h-100 shadow-sm">
+        ${ev.isSubscribed ? '<span class="badge bg-success position-absolute top-0 end-0 m-2">✔ Inscrito</span>' : ''}
+        <img src="${ev.image || 'assets/default.jpg'}" class="card-img-top" alt="${ev.name}">
+        <div class="card-body d-flex flex-column">
+          <h5>${ev.name}</h5>
+          <p class="flex-grow-1 small text-muted">${ev.summary || ''}</p>
+          <p class="text-secondary small">${ev.address}</p>
+          <button class="btn btn-primary mt-auto" data-id="${ev.id}">Ver detalhes</button>
+        </div>
+      </div>
+    ` : `
+      <div class="card shadow-sm">
+        ${ev.isSubscribed ? '<span class="badge bg-success position-absolute top-0 end-0 m-2">✔ Inscrito</span>' : ''}
+        <img src="${ev.image || 'assets/default.jpg'}" class="card-img-top" alt="${ev.name}">
+        <div class="card-body d-flex flex-column">
+          <h5>${ev.name}</h5>
+          <p class="flex-grow-1 small text-muted">${ev.summary || ''}</p>
+          <p class="text-secondary small">${ev.address}</p>
+          <button class="btn btn-primary mt-auto" data-id="${ev.id}">Ver detalhes</button>
+        </div>
+      </div>
+    `;
+
+    cardCol.innerHTML = cardHTML;
+    eventsContainer.appendChild(cardCol);
+  });
+
+  // adiciona event listener para abrir modal
+  eventsContainer.querySelectorAll("button[data-id]").forEach(btn => {
+    btn.addEventListener("click", () => showEventDetail(btn.dataset.id));
+  });
+}
+
+// toggle view
+document.getElementById("btnToggleView").onclick = () => {
+  viewGrid = !viewGrid;
+  renderEvents(window.eventsData);
+};
+
 
   function showEventDetail(id) {
     const ev = eventsData.find(e => e.id == id);
@@ -162,28 +201,28 @@ renderEvents(window.eventsData);
   </div>
 `;
 
-   
-    if (ev.latitude && ev.longitude) {
-  const map = L.map("mapEvent").setView([ev.latitude, ev.longitude], 15);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
-  L.marker([ev.latitude, ev.longitude]).addTo(map).bindPopup(ev.name);
 
-  document.getElementById("navigateBtn").onclick = () => {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const url = isIOS
-      ? `http://maps.apple.com/?daddr=${ev.latitude},${ev.longitude}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${ev.latitude},${ev.longitude}`;
-    window.open(url, "_blank");
-  };
-}
+    if (ev.latitude && ev.longitude) {
+      const map = L.map("mapEvent").setView([ev.latitude, ev.longitude], 15);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
+      L.marker([ev.latitude, ev.longitude]).addTo(map).bindPopup(ev.name);
+
+      document.getElementById("navigateBtn").onclick = () => {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const url = isIOS
+          ? `http://maps.apple.com/?daddr=${ev.latitude},${ev.longitude}`
+          : `https://www.google.com/maps/dir/?api=1&destination=${ev.latitude},${ev.longitude}`;
+        window.open(url, "_blank");
+      };
+    }
 
     eventModal.show();
     document.getElementById("subscribeBtn").onclick = () => subscribeToEvent(ev.id);
 
-    
+
   }
 
-  
+
 
   async function subscribeToEvent(id) {
     if (!window.isLoggedIn) {
@@ -212,16 +251,34 @@ renderEvents(window.eventsData);
 
   document.getElementById("btnToggleView").onclick = () => { viewGrid = !viewGrid; renderEvents(eventsData); };
 
+  // dentro do DOMContentLoaded, junto com os outros 'data-action'
   document.querySelectorAll('.offcanvas-body a[data-action]').forEach(link => {
-    link.onclick = e => {
+    link.addEventListener('click', async e => {
+      const action = link.dataset.action;
+      if (!action) return;
+
       e.preventDefault();
       sidebarBS.hide();
-      const action = link.dataset.action; // Corrigido aqui
-      if (action === "inicio" || action === "eventos") renderEvents(eventsData);
-      if (action === "mapa") showMap();
-      if (action === "meus-eventos") loadMyEvents();
-    };
+
+      if (action === 'inicio' || action === 'eventos') {
+        await loadEvents();
+      }
+      if (action === 'mapa') {
+        await showMap();
+      }
+      if (action === 'meus-eventos') {
+        await loadMyEvents();
+      }
+      if (action === 'painel') {
+        await loadAdminPanel();
+      }
+
+      if (action === 'config') {
+        await loadConfigPage();
+      }
+    });
   });
+
 
   const loginBtn = document.getElementById("menuLogin");
   if (loginBtn) loginBtn.onclick = e => {
@@ -252,42 +309,42 @@ renderEvents(window.eventsData);
   }
 
   async function showMap() {
-  eventsContainer.style.display = "none";
-  mapContainer.style.display = "block";
+    eventsContainer.style.display = "none";
+    mapContainer.style.display = "block";
 
-  // se já existir mapa, remove
-  if (mapContainer._leaflet_id) {
-    mapContainer._leaflet_id = null;
-  }
-
-  mapContainer.innerHTML = ""; 
-  mapContainer.style.height = "500px";
-
-  const map = L.map(mapContainer).setView([-20.425, -51.365], 13);
-
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap"
-  }).addTo(map);
-
-  // define URL conforme login
-  const url = window.isLoggedIn ? "php/api/get_my_events.php" : "php/api/get_events.php";
-
-  try {
-    const res = await fetchJSON(url);
-    const eventsToShow = res.events || [];
-
-    if (!eventsToShow.length) {
-      showToast("Nenhum evento para exibir no mapa", "info");
-      return;
+    // se já existir mapa, remove
+    if (mapContainer._leaflet_id) {
+      mapContainer._leaflet_id = null;
     }
 
-    // adiciona marcadores
-    eventsToShow.forEach(ev => {
-  if (ev.latitude && ev.longitude) {
-    const marker = L.marker([ev.latitude, ev.longitude]).addTo(map);
+    mapContainer.innerHTML = "";
+    mapContainer.style.height = "500px";
 
-    // cria o popup com dois botões
-    marker.bindPopup(`
+    const map = L.map(mapContainer).setView([-20.425, -51.365], 13);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap"
+    }).addTo(map);
+
+    // define URL conforme login
+    const url = window.isLoggedIn ? "php/api/get_my_events.php" : "php/api/get_events.php";
+
+    try {
+      const res = await fetchJSON(url);
+      const eventsToShow = res.events || [];
+
+      if (!eventsToShow.length) {
+        showToast("Nenhum evento para exibir no mapa", "info");
+        return;
+      }
+
+      // adiciona marcadores
+      eventsToShow.forEach(ev => {
+        if (ev.latitude && ev.longitude) {
+          const marker = L.marker([ev.latitude, ev.longitude]).addTo(map);
+
+          // cria o popup com dois botões
+          marker.bindPopup(`
       <div style="min-width:150px">
         <strong>${ev.name}</strong><br>
         <button class="btn btn-sm btn-primary mt-1" onclick="window.showEventDetail(${ev.id})">
@@ -298,84 +355,84 @@ renderEvents(window.eventsData);
         </button>
       </div>
     `);
+        }
+      });
+
+      window.openNavigation = function (lat, lng) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const url = isIOS
+          ? `http://maps.apple.com/?daddr=${lat},${lng}`
+          : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+        window.open(url, "_blank");
+      };
+
+      // ajusta zoom para mostrar todos
+      const bounds = eventsToShow
+        .filter(e => e.latitude && e.longitude)
+        .map(e => [e.latitude, e.longitude]);
+      if (bounds.length) map.fitBounds(bounds);
+    } catch (err) {
+      console.error(err);
+      showToast("Erro ao carregar eventos no mapa", "danger");
+    }
   }
-});
 
-window.openNavigation = function(lat, lng) {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const url = isIOS
-    ? `http://maps.apple.com/?daddr=${lat},${lng}`
-    : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  window.open(url, "_blank");
-};
-
-    // ajusta zoom para mostrar todos
-    const bounds = eventsToShow
-      .filter(e => e.latitude && e.longitude)
-      .map(e => [e.latitude, e.longitude]);
-    if (bounds.length) map.fitBounds(bounds);
-  } catch (err) {
-    console.error(err);
-    showToast("Erro ao carregar eventos no mapa", "danger");
+  // Abrir modal de registro a partir do login
+  const openRegister = document.getElementById('openRegisterModal');
+  if (openRegister) {
+    openRegister.addEventListener('click', e => {
+      e.preventDefault();
+      bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+      new bootstrap.Modal(document.getElementById('registerModal')).show();
+    });
   }
-}
 
-// Abrir modal de registro a partir do login
-const openRegister = document.getElementById('openRegisterModal');
-if (openRegister) {
-  openRegister.addEventListener('click', e => {
+
+  // Submissão do cadastro
+  document.getElementById('registerForm').addEventListener('submit', async e => {
     e.preventDefault();
-    bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
-    new bootstrap.Modal(document.getElementById('registerModal')).show();
+
+    const name = document.getElementById('registerName').value.trim();
+    const username = document.getElementById('registerUsername').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+
+    try {
+      const res = await fetch('php/api/register.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, username, email, password })
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        showToast(data.message || 'Erro ao cadastrar', 'danger');
+        return;
+      }
+
+      // Login automático após cadastro
+      const loginRes = await fetch('php/api/login.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const loginData = await loginRes.json();
+      if (loginData.success) {
+        window.isLoggedIn = true;
+        window.currentUserName = loginData.name || username;
+        showToast('Cadastro realizado! Você já está logado.', 'success');
+        bootstrap.Modal.getInstance(document.getElementById("registerModal")).hide();
+        location.reload();
+      } else {
+        showToast('Cadastro realizado, mas falha no login automático.', 'warning');
+      }
+
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao cadastrar', 'danger');
+    }
   });
-}
-
-
-// Submissão do cadastro
-document.getElementById('registerForm').addEventListener('submit', async e => {
-  e.preventDefault();
-
-  const name = document.getElementById('registerName').value.trim();
-  const username = document.getElementById('registerUsername').value.trim();
-  const email = document.getElementById('registerEmail').value.trim();
-  const password = document.getElementById('registerPassword').value;
-
-  try {
-    const res = await fetch('php/api/register.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, username, email, password })
-    });
-
-    const data = await res.json();
-    if (!data.success) {
-      showToast(data.message || 'Erro ao cadastrar', 'danger');
-      return;
-    }
-
-    // Login automático após cadastro
-    const loginRes = await fetch('php/api/login.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-
-    const loginData = await loginRes.json();
-    if (loginData.success) {
-      window.isLoggedIn = true;
-      window.currentUserName = loginData.name || username;
-      showToast('Cadastro realizado! Você já está logado.', 'success');
-      bootstrap.Modal.getInstance(document.getElementById("registerModal")).hide();
-      location.reload();
-    } else {
-      showToast('Cadastro realizado, mas falha no login automático.', 'warning');
-    }
-
-  } catch (err) {
-    console.error(err);
-    showToast('Erro ao cadastrar', 'danger');
-  }
-});
 
 
   document.getElementById("loginForm").onsubmit = async e => {
@@ -456,34 +513,89 @@ document.getElementById('registerForm').addEventListener('submit', async e => {
       });
     });
   }
-async function loadAdminPanel() {
-  if (!window.isAdmin) {
-    showToast("Acesso negado", "danger");
-    return;
-  }
 
-  eventsContainer.style.display = "flex";
-  mapContainer.style.display = "none";
-  eventsContainer.innerHTML = `<div class="text-center text-muted mt-4">Carregando painel...</div>`;
 
+
+
+async function loadConfigPage() {
   try {
-    const res = await fetch("admin/dashboard.php");
-    const html = await res.text();
-    eventsContainer.innerHTML = html;
+    // 1. pega os temas do BD
+    const themeRes = await fetch("admin/get_theme.php");
+    const { themeLight, themeDark } = await themeRes.json();
+    window.themeLight = themeLight;
+    window.themeDark  = themeDark;
 
-    // **INICIALIZA O admin.js APÓS O HTML SER INJETADO**
-    if (window.admin && typeof window.admin.init === "function") {
-      window.admin.init();
-    }
+    // 2. injeta o HTML
+    const res = await fetch("admin/page_config.php");
+    eventsContainer.innerHTML = await res.text();
+
+    // 3. injeta o config.js
+    const script = document.createElement("script");
+    script.src = "assets/js/config.js?v=" + Date.now();
+    script.onload = () => {
+      if (window.initConfigPage) {
+        window.initConfigPage(themeLight, themeDark);
+      }
+    };
+    document.body.appendChild(script);
 
   } catch (err) {
-    eventsContainer.innerHTML = `<div class="text-center text-danger mt-4">Erro ao carregar painel.</div>`;
+    console.error("Erro ao carregar página de configuração:", err);
+    eventsContainer.innerHTML = `<div class="text-center text-danger mt-4">Erro ao carregar configurações.</div>`;
   }
 }
 
 
 
 
+
+  async function loadAdminPanel() {
+    if (!window.isAdmin) {
+      showToast("Acesso negado", "danger");
+      return;
+    }
+
+    eventsContainer.style.display = "flex";
+    mapContainer.style.display = "none";
+    eventsContainer.innerHTML = `<div class="text-center text-muted mt-4">Carregando painel...</div>`;
+
+    try {
+      const res = await fetch("admin/dashboard.php");
+      const html = await res.text();
+      eventsContainer.innerHTML = html;
+
+      // scripts necessários
+      const scriptsToLoad = [
+        "assets/js/admin.js",
+        "assets/js/admin_ads.js",
+        "assets/js/users.js"
+      ];
+
+      for (const src of scriptsToLoad) {
+        // remove script antigo (para recarregar)
+        const existing = [...document.scripts].find(s => s.src.includes(src));
+        if (existing) existing.remove();
+
+        // injeta novo script com execução forçada
+        const script = document.createElement("script");
+        script.src = `${src}?v=${Date.now()}`;
+        script.defer = false;
+        script.async = false;
+        document.body.appendChild(script);
+      }
+
+      // pequena espera para garantir que scripts carreguem
+      setTimeout(() => {
+        if (window.admin && typeof window.admin.init === "function") {
+          window.admin.init();
+        }
+      }, 300);
+
+    } catch (err) {
+      console.error(err);
+      eventsContainer.innerHTML = `<div class="text-center text-danger mt-4">Erro ao carregar painel.</div>`;
+    }
+  }
 
   document.querySelectorAll('.offcanvas-body a').forEach(link => {
     link.addEventListener('click', async e => {
@@ -513,8 +625,114 @@ async function loadAdminPanel() {
 
 
 
+  // Dentro do DOMContentLoaded, junto com os outros listeners
+  const perfilBtn = document.getElementById("menuPerfil");
+  if (perfilBtn) {
+    perfilBtn.addEventListener("click", async e => {
+      e.preventDefault();
+      sidebarBS.hide();
+
+      eventsContainer.style.display = "flex";
+      mapContainer.style.display = "none";
+      eventsContainer.innerHTML = `<div class="text-center text-muted mt-4">Carregando perfil...</div>`;
+
+      try {
+        const res = await fetch("php/api/get_profile.php");
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        const u = data.profile;
+
+
+        // Formulário simples
+        eventsContainer.innerHTML = `
+        <div class="card shadow-sm p-4 mx-auto" style="max-width:600px">
+          <h4 class="mb-3">Meu Perfil</h4>
+          <form id="profileForm">
+            <div class="mb-3">
+              <label class="form-label">Nome</label>
+              <input class="form-control" name="name" value="${u.name || ''}" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">E-mail</label>
+              <input class="form-control" name="email" type="email" value="${u.email || ''}" required>
+            </div>
+           
+            <div class="mb-3">
+              <label class="form-label">Senha (preencha se quiser trocar)</label>
+              <input class="form-control" name="password" type="password" placeholder="••••••••">
+            </div>
+
+            ${window.isAdmin ? `
+              <div class="mb-3">
+                <label class="form-label">Tipo</label>
+                <select class="form-select" name="type">
+                  <option value="participant" ${u.type === 'participant' ? 'selected' : ''}>Participante</option>
+                  <option value="admin" ${u.type === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+              </div>
+              <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" name="active" id="activeSwitch" ${u.active ? 'checked' : ''}>
+                <label class="form-check-label" for="activeSwitch">Ativo</label>
+              </div>
+            ` : ''}
+
+            <button type="submit" class="btn btn-success w-100">Salvar Alterações</button>
+          </form>
+        </div>
+      `;
+
+        const form = document.getElementById("profileForm");
+        form.addEventListener("submit", async ev => {
+          ev.preventDefault();
+          const payload = Object.fromEntries(new FormData(form));
+          payload.active = form.querySelector("[name=active]")?.checked || false;
+
+          const res = await fetch("php/api/update_profile.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const j = await res.json();
+
+          if (j.success) showToast("Perfil atualizado", "success");
+          else showToast(j.message || "Erro ao salvar", "danger");
+        });
+
+      } catch (err) {
+        console.error(err);
+        eventsContainer.innerHTML = `<div class="text-center text-danger mt-4">Erro ao carregar perfil.</div>`;
+      }
+    });
+  }
+
+
+
   loadAds();
   loadEvents();
 
 
+});
+
+// ===========================
+// MODO CLARO / ESCURO
+// ===========================
+document.addEventListener("DOMContentLoaded", () => {
+  const themeButton = document.getElementById("btnToggleTheme");
+
+  if (themeButton) {
+    // Carrega tema salvo
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.body.classList.toggle("theme-dark", savedTheme === "dark");
+
+    // Atualiza ícone conforme o tema
+    themeButton.textContent = savedTheme === "dark" ? "🌙 Modo Escuro" : "🌞 Modo Claro";
+
+    themeButton.addEventListener("click", () => {
+      document.body.classList.toggle("theme-dark");
+      const isDark = document.body.classList.contains("theme-dark");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+      themeButton.textContent = isDark ? "🌙 Modo Escuro" : "🌞 Modo Claro";
+    });
+  }
 });

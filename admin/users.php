@@ -3,11 +3,12 @@
 require_once __DIR__ . '/../php/lib/auth.php';
 requireAdmin(); // Garante que só administradores acessem
 ?>
+
 <div class="container mt-4">
     <h4 class="mb-3">👥 Gestão de Usuários</h4>
 
     <div class="d-flex justify-content-between mb-3">
-        <button id="btnAddUser" class="btn btn-success">Adicionar Usuário</button>
+<button class="btn btn-success" onclick="addUser()">Adicionar Usuário</button>
         <button id="btnExportUsers" class="btn btn-outline-primary">Exportar Lista</button>
     </div>
 
@@ -51,7 +52,7 @@ requireAdmin(); // Garante que só administradores acessem
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" id="saveUserBtn" class="btn btn-primary">Salvar</button>
+<button id="saveUserBtn" class="btn btn-success">Salvar</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
       </div>
     </div>
@@ -94,6 +95,24 @@ requireAdmin(); // Garante que só administradores acessem
           <button type="submit" class="btn btn-success">Exportar</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Inscrições -->
+<div class="modal fade" id="userSubscriptionsModal" tabindex="-1" aria-labelledby="subscriptionsTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="subscriptionsTitle">Inscrições do Usuário</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="subscriptionsBody">
+        <p>Carregando...</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
     </div>
   </div>
 </div>

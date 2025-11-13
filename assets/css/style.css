@@ -160,3 +160,206 @@ body.theme-dark {
 .ad-slide:hover {
   transform: scale(1.02);
 }
+
+
+/* =======================
+   MODO CLARO / ESCURO
+======================= */
+:root {
+  --color-bg: #ffffff;
+  --color-text: #212529;
+  --color-primary: #0d6efd;
+  --color-secondary: #6c757d;
+}
+
+body.theme-dark {
+  --color-bg: #121212;
+  --color-text: #f8f9fa;
+  --color-primary: #0d6efd;
+  --color-secondary: #6c757d;
+}
+
+body {
+  background-color: var(--color-bg) !important;
+  color: var(--color-text) !important;
+}
+
+.navbar,
+.offcanvas,
+.table thead {
+  background-color: var(--color-primary) !important;
+}
+
+.nav-link,
+.btn-outline-light,
+.table {
+  color: var(--color-text) !important;
+}
+
+.table {
+  background-color: var(--color-bg) !important;
+}
+
+.btn-outline-light {
+  border-color: var(--color-text) !important;
+}
+
+.pickr {
+  z-index: 2000 !important;
+}
+
+.upload-preview {
+    max-height: 100px;
+    max-width: 150px; /* ou o valor que achar melhor */
+    object-fit: contain;
+    border-radius: 6px;
+    display: block;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+.btn-secondary {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-text);
+}
+
+/* GRID */
+.view-grid .card {
+  transition: transform 0.2s;
+}
+.view-grid .card:hover {
+  transform: translateY(-3px);
+}
+
+/* LISTA */
+.view-list .card {
+  display: flex;
+  flex-direction: row;
+  height: auto;
+}
+.view-list .card img.card-img-top {
+  width: 200px; /* largura fixa da imagem */
+  height: auto;
+  object-fit: cover;
+  border-radius: 6px 0 0 6px;
+}
+.view-list .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-left: 1rem;
+}
+.view-list .col {
+  width: 100%; /* ocupa 100% da linha */
+}
+
+/* Badge de inscrição */
+.card .badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+  font-size: 0.75rem;
+  padding: 0.35em 0.5em;
+}
+
+/* Ajuste para modo lista */
+.view-list .card .badge {
+  top: 0.5rem;
+  right: 0.5rem;
+}
+.view-list .card .badge {
+  right: auto;
+  left: 210px; /* largura da imagem + 10px de margem */
+  top: 0.5rem;
+}
+/* Container de eventos no modo grade */
+#eventsContainer.view-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* centraliza os cards */
+  gap: 1rem; /* espaço entre os cards */
+}
+
+/* Cada card no grid */
+#eventsContainer.view-grid .col-md-4 {
+  flex: 1 1 300px; /* cresce e encolhe, largura mínima 300px */
+  max-width: 350px; /* opcional, limita tamanho do card */
+}
+
+
+/* ===============================
+   MODAIS E COMPONENTES
+   =============================== */
+
+/* Modal geral */
+.modal-content {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-secondary);
+}
+
+/* Cabeçalho do modal */
+.modal-header {
+  border-bottom: 1px solid var(--color-secondary);
+}
+
+/* Rodapé do modal */
+.modal-footer {
+  border-top: 1px solid var(--color-secondary);
+}
+
+/* Inputs dentro do modal */
+.modal-content .form-control {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-secondary);
+}
+
+/* Placeholder mais claro */
+.modal-content .form-control::placeholder {
+  color: rgba(255,255,255,0.5);
+}
+
+/* Botões primários dentro do modal */
+.modal-content .btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+/* Botões secundários dentro do modal */
+.modal-content .btn-secondary {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-text);
+}
+
+/* Botão fechar */
+.modal-content .btn-close {
+  filter: invert(0); /* padrão claro */
+  transition: filter 0.3s;
+}
+
+/* Inverte botão fechar no modo escuro */
+body.theme-dark .modal-content .btn-close {
+  filter: invert(1);
+}
+
+/* Links dentro do modal */
+.modal-content a {
+  color: var(--color-primary);
+}
+
+/* Ajuste do foco */
+.modal-content .form-control:focus {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.1);
+}

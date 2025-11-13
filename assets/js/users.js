@@ -1,12 +1,19 @@
 document.addEventListener("DOMContentLoaded", () => {
   loadUsersList();
 
-  document.getElementById("btnRefreshUsers").addEventListener("click", loadUsersList);
+  //document.getElementById("btnRefreshUsers").addEventListener("click", loadUsersList);
+
+  document.body.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "saveUserBtn") saveUser();
+  });
 });
+
+
+let currentUserId = null; // null = novo usuário
 
 async function loadUsersList() {
   const container = document.getElementById("adminUsersContainer");
-  container.innerHTML = "<p>Carregando usuários...</p>";
+  //container.innerHTML = "<p>Carregando usuários...</p>";
 
   try {
     const res = await fetch("admin/users_get.php");
@@ -22,7 +29,6 @@ async function loadUsersList() {
       return;
     }
 
-    // Monta tabela
     let html = `
       <table class="table table-striped table-bordered align-middle">
         <thead class="table-dark">
@@ -71,11 +77,8 @@ async function loadUsersList() {
 
 // Placeholder das ações (vamos preencher depois)
 async function editUser(id) {
-  
-
-  const modalEl = document.getElementById("userModalAdmin");
-  const modal = new bootstrap.Modal(modalEl);
-
+  currentUserId = id;
+  const modal = new bootstrap.Modal(document.getElementById("userModalAdmin"));
   try {
     const res = await fetch("admin/users_edit.php", {
       method: "POST",
@@ -83,7 +86,6 @@ async function editUser(id) {
       body: JSON.stringify({ fetch: 1, id })
     });
     const data = await res.json();
-console.error("Data received: ", data);
     if (!data.success) return alert(data.message || "Erro ao carregar usuário.");
 
     const u = data.user;
@@ -93,7 +95,6 @@ console.error("Data received: ", data);
     document.getElementById("editUserEmail").value = u.email ?? "";
     document.getElementById("editUserType").value = u.type;
     document.getElementById("editUserActive").checked = !!u.active;
-
     modal.show();
   } catch (err) {
     console.error(err);
@@ -101,49 +102,183 @@ console.error("Data received: ", data);
   }
 }
 
-// Salvar alterações
-document.getElementById("saveUserBtn").addEventListener("click", async () => {
 
-  const id = document.getElementById("editUserId").value;
+
+
+async function deleteUser(id) {
+  if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
+
+  try {
+    const res = await fetch("admin/users_delete.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
+
+    const data = await res.json();
+    console.log("Delete response:", data);
+
+    if (!data.success) return alert(data.message || "Erro ao excluir usuário.");
+
+    alert("Usuário excluído com sucesso!");
+    loadUsersList();
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao excluir usuário.");
+  }
+}
+
+
+async function resetPassword(id) {
+  if (!confirm("Deseja realmente resetar a senha deste usuário?")) return;
+
+  try {
+    const res = await fetch("admin/users_resetpass.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    console.log("Reset response:", data);
+
+    if (!data.success) return alert(data.message || "Erro ao resetar senha.");
+
+    alert(`Senha resetada com sucesso!\nNova senha: ${data.newPassword}`);
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao resetar senha.");
+  }
+}
+
+
+async function toggleActive(id, active) {
+  const action = active ? "desativar" : "ativar";
+  if (!confirm(`Deseja realmente ${action} este usuário?`)) return;
+
+  try {
+    const res = await fetch("admin/users_toggle.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    console.log("Toggle response:", data);
+
+    if (!data.success) return alert(data.message || "Erro ao atualizar status.");
+
+    alert(`Usuário ${data.newStatus ? "ativado" : "desativado"} com sucesso.`);
+    loadUsersList();
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao alterar status.");
+  }
+}
+
+async function viewSubscriptions(id) {
+  const modalEl = document.getElementById("userSubscriptionsModal");
+  const modal = new bootstrap.Modal(modalEl);
+  const body = document.getElementById("subscriptionsBody");
+  const title = document.getElementById("subscriptionsTitle");
+
+  body.innerHTML = "<p>Carregando...</p>";
+  title.textContent = "Inscrições do Usuário ID " + id;
+
+  try {
+    const res = await fetch("admin/users_subscriptions.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      body.innerHTML = "<p>Erro ao carregar inscrições.</p>";
+      return;
+    }
+
+    if (data.events.length === 0) {
+      body.innerHTML = "<p>Nenhuma inscrição encontrada.</p>";
+      return;
+    }
+
+    let html = `
+      <table class="table table-bordered table-sm">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Evento</th>
+            <th>Cidade</th>
+            <th>Início</th>
+            <th>Fim</th>
+            <th>Inscrito em</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    data.events.forEach(ev => {
+      html += `
+        <tr>
+          <td>${ev.id}</td>
+          <td>${ev.name}</td>
+          <td>${ev.city ?? "-"}</td>
+          <td>${ev.date_start}</td>
+          <td>${ev.date_end}</td>
+          <td>${ev.subscribed_at}</td>
+        </tr>
+      `;
+    });
+
+    html += "</tbody></table>";
+    body.innerHTML = html;
+  } catch (err) {
+    console.error(err);
+    body.innerHTML = "<p>Erro ao carregar inscrições.</p>";
+  }
+
+  modal.show();
+}
+
+function addUser() {
+  currentUserId = null;
+  const modal = new bootstrap.Modal(document.getElementById("userModalAdmin"));
+  document.getElementById("editUserId").value = "";
+  document.getElementById("editUserUsername").value = "";
+  document.getElementById("editUserName").value = "";
+  document.getElementById("editUserEmail").value = "";
+  document.getElementById("editUserType").value = "participant";
+  document.getElementById("editUserActive").checked = true;
+  modal.show();
+}
+
+async function saveUser() {
+  const id = document.getElementById("editUserId").value.trim();
   const username = document.getElementById("editUserUsername").value.trim();
   const name = document.getElementById("editUserName").value.trim();
   const email = document.getElementById("editUserEmail").value.trim();
   const type = document.getElementById("editUserType").value;
   const active = document.getElementById("editUserActive").checked;
 
+  const url = currentUserId ? "admin/users_edit.php" : "admin/users_add.php";
+  const payload = currentUserId
+    ? { id, username, name, email, type, active }
+    : { username, name, email, type, active };
+
   try {
-    const res = await fetch("admin/users_edit.php", {
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, username, name, email, type, active })
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
-  console.error("Data received: ", data);
 
     if (!data.success) return alert(data.message || "Erro ao salvar usuário.");
 
-    alert("Usuário salvo com sucesso!");
+    alert(currentUserId ? "Usuário atualizado com sucesso!" : "Usuário adicionado com sucesso!");
     bootstrap.Modal.getInstance(document.getElementById("userModalAdmin")).hide();
     loadUsersList();
   } catch (err) {
     console.error(err);
     alert("Erro ao salvar usuário.");
   }
-});
-
-
-function deleteUser(id) {
-  alert("Excluir usuário ID: " + id);
-}
-
-function resetPassword(id) {
-  alert("Resetar senha do usuário ID: " + id);
-}
-
-function toggleActive(id, active) {
-  alert(`${active ? "Desativar" : "Ativar"} usuário ID: ${id}`);
-}
-
-function viewSubscriptions(id) {
-  alert("Ver inscrições do usuário ID: " + id);
 }
