@@ -131,11 +131,15 @@ window.admin = (() => {
                 img.src = ev.target.result;
                 document.getElementById("cropContainer").style.display = "block";
                 if (cropper) cropper.destroy();
-                cropper = new Cropper(img, {
-                    aspectRatio: 2 / 1,
-                    viewMode: 1,
-                    autoCropArea: 1,
-                });
+              cropper = new Cropper(preview, {
+    aspectRatio: NaN,       // permite qualquer proporção
+    viewMode: 0,            // permite mover o crop fora dos limites se necessário
+    autoCropArea: 0.8,      // inicializa com 80% da imagem, mas pode ajustar livremente
+    movable: true,
+    zoomable: true,
+    scalable: true,
+    rotatable: false
+});
             };
             reader.readAsDataURL(file);
         });
@@ -451,7 +455,15 @@ window.admin = (() => {
                 preview.style.display = "block";
 
                 if (cropper) cropper.destroy();
-                cropper = new Cropper(preview, { aspectRatio: 4 / 3, viewMode: 1, autoCropArea: 1 });
+cropper = new Cropper(preview, {
+    aspectRatio: NaN,       // permite qualquer proporção
+    viewMode: 0,            // permite mover o crop fora dos limites se necessário
+    autoCropArea: 0.8,      // inicializa com 80% da imagem, mas pode ajustar livremente
+    movable: true,
+    zoomable: true,
+    scalable: true,
+    rotatable: false
+});
             };
             reader.readAsDataURL(file);
         });
