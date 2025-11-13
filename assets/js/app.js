@@ -1,6 +1,6 @@
 // torna função acessível no escopo global pro botão do popup funcionar
 window.eventsData = [];
-
+window.currentUserId =  null;
 
 window.showEventDetail = function (id) {
   const ev = window.eventsData.find(e => e.id == id);
@@ -549,53 +549,54 @@ async function loadConfigPage() {
 
 
 
+
   async function loadAdminPanel() {
-    if (!window.isAdmin) {
-      showToast("Acesso negado", "danger");
-      return;
+  if (!window.isAdmin) return showToast("Acesso negado", "danger");
+
+  eventsContainer.style.display = "flex";
+  mapContainer.style.display = "none";
+  eventsContainer.innerHTML = `<div class="text-center text-muted mt-4">Carregando painel...</div>`;
+
+  try {
+    const res = await fetch("admin/dashboard.php");
+   
+    eventsContainer.innerHTML = await res.text();
+
+    const scriptsToLoad = [
+      "assets/js/admin.js",
+      "assets/js/admin_ads.js",
+      "assets/js/users.js"
+    ];
+
+    for (const src of scriptsToLoad) {
+      const existing = [...document.scripts].find(s => s.src.includes(src));
+      if (existing) existing.remove();
+
+      const script = document.createElement("script");
+      script.src = `${src}?v=${Date.now()}`;
+      script.defer = false;
+      script.async = false;
+      document.body.appendChild(script);
+
+      // espera carregar o users.js antes de chamar loadUsersList
+      // só chama loadUsersList depois que o users.js terminar de carregar
+if (src.includes("users.js")) {
+  script.onload = () => {
+    window.loadUsersList?.(); // garante que o container já existe
+  };
+}
     }
 
-    eventsContainer.style.display = "flex";
-    mapContainer.style.display = "none";
-    eventsContainer.innerHTML = `<div class="text-center text-muted mt-4">Carregando painel...</div>`;
+    setTimeout(() => {
+      if (window.admin && typeof window.admin.init === "function") window.admin.init();
+    }, 300);
 
-    try {
-      const res = await fetch("admin/dashboard.php");
-      const html = await res.text();
-      eventsContainer.innerHTML = html;
-
-      // scripts necessários
-      const scriptsToLoad = [
-        "assets/js/admin.js",
-        "assets/js/admin_ads.js",
-        "assets/js/users.js"
-      ];
-
-      for (const src of scriptsToLoad) {
-        // remove script antigo (para recarregar)
-        const existing = [...document.scripts].find(s => s.src.includes(src));
-        if (existing) existing.remove();
-
-        // injeta novo script com execução forçada
-        const script = document.createElement("script");
-        script.src = `${src}?v=${Date.now()}`;
-        script.defer = false;
-        script.async = false;
-        document.body.appendChild(script);
-      }
-
-      // pequena espera para garantir que scripts carreguem
-      setTimeout(() => {
-        if (window.admin && typeof window.admin.init === "function") {
-          window.admin.init();
-        }
-      }, 300);
-
-    } catch (err) {
-      console.error(err);
-      eventsContainer.innerHTML = `<div class="text-center text-danger mt-4">Erro ao carregar painel.</div>`;
-    }
+  } catch (err) {
+    console.error(err);
+    eventsContainer.innerHTML = `<div class="text-center text-danger mt-4">Erro ao carregar painel.</div>`;
   }
+}
+
 
   document.querySelectorAll('.offcanvas-body a').forEach(link => {
     link.addEventListener('click', async e => {
